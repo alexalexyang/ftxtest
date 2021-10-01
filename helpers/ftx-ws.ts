@@ -1,29 +1,17 @@
+import { TradeData, WsResponse } from "../types/ftx";
+
 import { QueryClient } from "react-query";
 
-interface TradeData {
-  id: number;
-  price: number;
-  size: number;
-  side: string;
-  liquidation: boolean;
-  time: Date;
-}
-interface WsResponse {
-  type: "update";
-  channel: "trades";
-  market: string;
-  data: TradeData[];
-}
-
-// const tickers = ["BTC-PERP", "BTC/USD", "ETH-PERP", "ETH/USD"];
+// const tickers = ["SOL-PERP", "HNT-PERP"];
 const tickers = ["SOL-PERP"];
 
 export const ftxWs = (ws: WebSocket, queryClient: QueryClient) => {
-  console.log({ ws });
+  console.log("Connecting.");
 
   ws.onopen = () => {
+    console.log("Connected.");
     tickers.forEach((ticker) => {
-      // console.log(ticker);
+      console.log(`Subscribing to ${ticker}.`);
       ws.send(
         `{"op": "subscribe", "channel": "trades", "market": "${ticker}"}`
       );
@@ -38,20 +26,28 @@ export const ftxWs = (ws: WebSocket, queryClient: QueryClient) => {
       // data.forEach((datum) => console.log(datum));
 
       queryClient.setQueryData(res.market, (state): TradeData[] => {
+        const incomingData = data.filter((datum) => datum.side === "buy");
         const old = state ? (state as TradeData[]) : [];
-        const current = [...old, ...data];
 
-        if (current.length > 5) {
-          return current.slice(2, 7);
+        if (!incomingData.length) {
+          return old;
         }
 
-        return current;
+        const newState = [...old, ...incomingData];
+
+        const newStateLength = newState.length;
+        if (newStateLength > 30) {
+          const newStateSliced = newState.slice(
+            newStateLength - 32,
+            newStateLength - 1
+          );
+          // console.log(newStateSliced);
+          return newStateSliced;
+        }
+
+        return newState;
       });
     }
-
-    // if (data.type === "pong") {
-    //   console.log(data);
-    // }
   };
 };
 
@@ -62,10 +58,7 @@ export const ftxUnsubscribe = (ws: WebSocket) => {
 };
 
 export const ftxWsKeepAlive = (ws: WebSocket) => {
-  //   let counter = 0;
   return setInterval(() => {
-    // counter++;
-    // console.log(`ping ~ ${counter}`);
     ws.send(JSON.stringify({ op: "ping" }));
   }, 15000);
 };

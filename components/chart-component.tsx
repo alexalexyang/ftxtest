@@ -1,8 +1,18 @@
 import { Button, ButtonsWrapper } from "../styles/main";
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { ftxUnsubscribe, ftxWs, ftxWsKeepAlive } from "../helpers/ftx-ws";
 import { useEffect, useState } from "react";
 
 import type { NextPage } from "next";
+import { TradeData } from "../types/ftx";
 import { useQueryClient } from "react-query";
 
 // {
@@ -16,10 +26,27 @@ import { useQueryClient } from "react-query";
 
 const ChartComponent: NextPage = () => {
   const queryClient = useQueryClient();
+  const [data, setData] = useState<TradeData[]>();
 
   const [ws, setWs] = useState<WebSocket>();
-  const [intervalId, setintervalId] = useState<NodeJS.Timer>();
+  const [pingId, setPingId] = useState<NodeJS.Timer>();
   const [startPing, setStartPing] = useState<boolean>(false);
+  const [plotId, setPlotId] = useState<NodeJS.Timer>();
+  const [startPlot, setStartPlot] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (startPlot === false) {
+      plotId && clearInterval(plotId);
+      setPlotId(undefined);
+      return;
+    }
+
+    const startPlotId = setInterval(() => {
+      setData(queryClient.getQueryData("SOL-PERP"));
+    }, 2000);
+
+    setPlotId(startPlotId);
+  }, [startPlot]);
 
   useEffect(() => {
     if (!ws) {
@@ -33,22 +60,40 @@ const ChartComponent: NextPage = () => {
   useEffect(() => {
     if (startPing && ws) {
       const id = ftxWsKeepAlive(ws);
-      setintervalId(id);
+      setPingId(id);
     }
-    if (!startPing && intervalId) {
-      clearInterval(intervalId);
+    if (!startPing && pingId) {
+      clearInterval(pingId);
     }
   }, [startPing]);
 
   return (
     <>
+      <LineChart
+        width={730}
+        height={250}
+        data={data}
+        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="time" />
+        <YAxis type="number" domain={[159, 160.5]} />
+        <Tooltip />
+        <Legend />
+        <Line type="monotone" dataKey="price" stroke="#8884d8" />
+      </LineChart>
       <ButtonsWrapper>
-        <Button onClick={() => setWs(new WebSocket("wss://ftx.com/ws/"))}>
+        <Button
+          onClick={() => {
+            setWs(new WebSocket("wss://ftx.com/ws/"));
+            setStartPlot(true);
+          }}
+        >
           Connect
         </Button>
         <Button
           onClick={() => {
-            const data = queryClient.getQueryData("BTC-PERP");
+            const data = queryClient.getQueryData("SOL-PERP");
             console.log(data);
           }}
         >
@@ -62,7 +107,9 @@ const ChartComponent: NextPage = () => {
 
             ftxUnsubscribe(ws);
             ws.close();
+            setWs(undefined);
             setStartPing(false);
+            setStartPlot(false);
           }}
         >
           Disconnect
