@@ -1,17 +1,34 @@
 import "../styles/globals.css";
 
-import { QueryClient, QueryClientProvider } from "react-query";
+import {
+  Dispatch,
+  SetStateAction,
+  createContext,
+  useMemo,
+  useState,
+} from "react";
 
 import type { AppProps } from "next/app";
+import { TickerData } from "../types/state-types";
 
-const queryClient = new QueryClient();
+export const PriceContext = createContext({
+  tickerData: {},
+  setTickerData: () => {},
+} as {
+  tickerData: TickerData;
+  setTickerData: Dispatch<SetStateAction<TickerData>>;
+});
 
 function MyApp({ Component, pageProps }: AppProps) {
+  const [tickerData, setTickerData] = useState<TickerData>({});
+
+  const value = useMemo(() => ({ tickerData, setTickerData }), [tickerData]);
+
   return (
     <>
-      <QueryClientProvider client={queryClient}>
+      <PriceContext.Provider value={value}>
         <Component {...pageProps} />
-      </QueryClientProvider>
+      </PriceContext.Provider>
     </>
   );
 }

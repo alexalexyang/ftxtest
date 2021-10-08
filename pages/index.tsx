@@ -1,7 +1,11 @@
-import Chart from "../components/chart-component";
 import { Main } from "../styles/main";
 import type { NextPage } from "next";
 import PageHead from "../components/page-head";
+import dynamic from "next/dynamic";
+
+const ChartWrapper = dynamic(() => import("../components/chart-wrapper"), {
+  ssr: false,
+});
 
 const Home: NextPage = () => {
   return (
@@ -10,7 +14,7 @@ const Home: NextPage = () => {
       <Main>
         <h1>Just chilling</h1>
         <p>What is this?</p>
-        <Chart />
+        <ChartWrapper ticker={"SOL-PERP"} />
       </Main>
     </>
   );

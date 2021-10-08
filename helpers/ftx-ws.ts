@@ -1,11 +1,17 @@
+import { Dispatch, SetStateAction } from "react";
 import { TradeData, WsResponse } from "../types/ftx";
 
-import { QueryClient } from "react-query";
+import { TickerData } from "../types/state-types";
 
 // const tickers = ["SOL-PERP", "HNT-PERP"];
 const tickers = ["SOL-PERP"];
 
-export const ftxWs = (ws: WebSocket, queryClient: QueryClient) => {
+interface FtxWsProps {
+  ws: WebSocket;
+  setTickerData: Dispatch<SetStateAction<TickerData>>;
+}
+
+export const ftxWs = ({ ws, setTickerData }: FtxWsProps) => {
   console.log("Connecting.");
 
   ws.onopen = () => {
@@ -23,35 +29,67 @@ export const ftxWs = (ws: WebSocket, queryClient: QueryClient) => {
     if (res.channel === "trades" && res.type === "update") {
       const { data } = res;
 
-      // data.forEach((datum) => console.log(datum));
+      const incomingData = data
+        .reduce<TradeData[]>((acc, item) => {
+          if (item.side !== "buy") {
+            return acc;
+          }
 
-      queryClient.setQueryData(res.market, (state): TradeData[] => {
-        const incomingData = data.filter((datum) => datum.side === "buy");
-        const old = state ? (state as TradeData[]) : [];
+          // 2021-10-08T21:58:09.361928+00:00
+          item.time = new Date(item.time).toLocaleTimeString("en-GB", {
+            timeStyle: "medium",
+          });
 
-        if (!incomingData.length) {
-          return old;
+          return acc.concat(item);
+        }, [])
+        .reverse();
+
+      if (!incomingData.length) {
+        console.log("No data");
+        return;
+      }
+
+      setTickerData((oldState) => {
+        if (oldState[res.market] === undefined) {
+          oldState[res.market] = {
+            priceData: [],
+          };
         }
 
-        const newState = [...old, ...incomingData];
+        const newTickerState = [
+          ...oldState[res.market].priceData,
+          ...incomingData,
+        ];
 
-        const newStateLength = newState.length;
-        if (newStateLength > 30) {
-          const newStateSliced = newState.slice(
-            newStateLength - 32,
-            newStateLength - 1
+        const newTickerStateLength = newTickerState.length;
+        if (newTickerStateLength > 31) {
+          const newTickerStateSliced = newTickerState.slice(
+            newTickerStateLength - 31,
+            newTickerStateLength - 1
           );
-          // console.log(newStateSliced);
-          return newStateSliced;
+
+          const newState = {
+            ...oldState,
+            [res.market]: {
+              priceData: newTickerStateSliced,
+            },
+          };
+
+          return newState;
         }
 
-        return newState;
+        return {
+          ...oldState,
+          [res.market]: {
+            priceData: newTickerState,
+          },
+        };
       });
     }
   };
 };
 
-export const ftxUnsubscribe = (ws: WebSocket) => {
+export const unSubscribeChannel = (ws: WebSocket) => {
   tickers.forEach((ticker) =>
     ws.send(`{"op": "unsubscribe", "channel": "trades", "market": "${ticker}"}`)
   );

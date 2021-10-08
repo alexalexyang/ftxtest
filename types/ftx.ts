@@ -4,7 +4,7 @@ export interface TradeData {
   size: number;
   side: string;
   liquidation: boolean;
-  time: Date;
+  time: string;
 }
 
 export interface WsResponse {
