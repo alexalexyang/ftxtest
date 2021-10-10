@@ -4,6 +4,7 @@ export const Main = styled.div`
   height: 100%;
   width: 100%;
   display: flex;
+  padding-bottom: 10rem;
   flex-direction: column;
   align-items: center;
   padding-top: 5rem;
@@ -44,4 +45,17 @@ export const ButtonsWrapper = styled.div`
   > :not(:last-child) {
     margin-right: 1rem;
   }
+`;
+
+export const ChartWrapper = styled.div`
+  width: calc(100% - 2rem);
+  border-radius: 1.5rem;
+  border: 1px solid tan;
+  padding: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 1rem 0;
+  gap: 1.5rem;
+  background-color: lightgoldenrodyellow;
 `;

@@ -1,7 +1,8 @@
 # Todo
 
-- Check data structure for when logged in and logged out
-  - Find out if there is a purchase handshake
+- Build REST time series graph for per second.
+- KIV websocket API (for faster action?)
+
 - Build time series graph for different time scales:
   - min
   - hour

@@ -3,9 +3,11 @@ import type { NextPage } from "next";
 import PageHead from "../components/page-head";
 import dynamic from "next/dynamic";
 
-const ChartWrapper = dynamic(() => import("../components/chart-wrapper"), {
+const WsCharts = dynamic(() => import("../components/ws-charts"), {
   ssr: false,
 });
+
+const tickers = ["SOL/USD", "BTC/USD"];
 
 const Home: NextPage = () => {
   return (
@@ -14,7 +16,7 @@ const Home: NextPage = () => {
       <Main>
         <h1>Just chilling</h1>
         <p>What is this?</p>
-        <ChartWrapper ticker={"SOL-PERP"} />
+        <WsCharts tickers={tickers} />
       </Main>
     </>
   );

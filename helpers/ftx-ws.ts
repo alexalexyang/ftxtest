@@ -3,9 +3,6 @@ import { TradeData, WsResponse } from "../types/ftx";
 
 import { TickerData } from "../types/state-types";
 
-// const tickers = ["SOL-PERP", "HNT-PERP"];
-const tickers = ["SOL-PERP"];
-
 interface FtxWsProps {
   ws: WebSocket;
   setTickerData: Dispatch<SetStateAction<TickerData>>;
@@ -16,12 +13,6 @@ export const ftxWs = ({ ws, setTickerData }: FtxWsProps) => {
 
   ws.onopen = () => {
     console.log("Connected.");
-    tickers.forEach((ticker) => {
-      console.log(`Subscribing to ${ticker}.`);
-      ws.send(
-        `{"op": "subscribe", "channel": "trades", "market": "${ticker}"}`
-      );
-    });
   };
 
   ws.onmessage = (e) => {
@@ -45,7 +36,6 @@ export const ftxWs = ({ ws, setTickerData }: FtxWsProps) => {
         .reverse();
 
       if (!incomingData.length) {
-        console.log("No data");
         return;
       }
 
@@ -89,7 +79,14 @@ export const ftxWs = ({ ws, setTickerData }: FtxWsProps) => {
   };
 };
 
-export const unSubscribeChannel = (ws: WebSocket) => {
+export const subscribeChannels = (ws: WebSocket, tickers: string[]) => {
+  tickers.forEach((ticker) => {
+    console.log(`Subscribing to ${ticker}.`);
+    ws.send(`{"op": "subscribe", "channel": "trades", "market": "${ticker}"}`);
+  });
+};
+
+export const unSubscribeChannels = (ws: WebSocket, tickers: string[]) => {
   tickers.forEach((ticker) =>
     ws.send(`{"op": "unsubscribe", "channel": "trades", "market": "${ticker}"}`)
   );

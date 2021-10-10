@@ -1,9 +1,9 @@
 import { Button, ButtonsWrapper } from "../../styles/main";
-import { TradeData, WsResponse } from "../../types/ftx";
 import {
   ftxWs,
   ftxWsKeepAlive,
-  unSubscribeChannel,
+  subscribeChannels,
+  unSubscribeChannels,
 } from "../../helpers/ftx-ws";
 import { useContext, useEffect, useState } from "react";
 
@@ -11,16 +11,16 @@ import { NextPage } from "next";
 import { PriceContext } from "../../pages/_app";
 
 interface Props {
-  ticker: string;
+  tickers: string[];
 }
 
-const ChartButtons: NextPage<Props> = ({ ticker }) => {
+const ChartButtons: NextPage<Props> = ({ tickers }) => {
   const [ws, setWs] = useState<WebSocket>();
 
   const [pingId, setPingId] = useState<NodeJS.Timer>();
   const [ping, setPing] = useState<boolean>(false);
 
-  const { tickerData, setTickerData } = useContext(PriceContext);
+  const { setTickerData } = useContext(PriceContext);
 
   useEffect(() => {
     if (!ws) {
@@ -53,10 +53,13 @@ const ChartButtons: NextPage<Props> = ({ ticker }) => {
       </Button>
       <Button
         onClick={() => {
-          console.log(tickerData);
+          if (!ws) {
+            return;
+          }
+          subscribeChannels(ws, tickers);
         }}
       >
-        Data
+        Subscribe
       </Button>
       <Button
         onClick={() => {
@@ -64,7 +67,7 @@ const ChartButtons: NextPage<Props> = ({ ticker }) => {
             return;
           }
 
-          unSubscribeChannel(ws);
+          unSubscribeChannels(ws, tickers);
           ws.close();
           setWs(undefined);
           setPing(false);
