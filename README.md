@@ -1,14 +1,6 @@
 # Todo
 
-- Try CORS proxy middleware to reach FTX: https://nextjs.org/docs/api-routes/api-middlewares
-
-- KIV websocket API (for faster action?)
-
-- Build time series graph for different time scales:
-  - min
-  - hour
-  - day
-  - month
+- Use JSON as DB: https://github.com/typicode/lowdb
 - Plot standard deviation and/or other useful indicators
 
 ## Buffet or bust

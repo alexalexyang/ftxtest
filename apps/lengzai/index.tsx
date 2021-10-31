@@ -1,4 +1,3 @@
-import { QueryCache, QueryClient, useQuery, useQueryClient } from "react-query";
 import RestButtons, {
   useTickerData,
 } from "../../components/rest-charts/rest-buttons";

@@ -1,6 +1,5 @@
-import { Ask, Bid, BidAsk, WsBidAsk } from "../types/ftx";
+import { Ask, Bid, WsBidAsk } from "../types/ftx";
 import { Dispatch, SetStateAction } from "react";
-import { isEqual, uniq, uniqWith } from "lodash";
 
 import { TickerData } from "../types/state-types";
 

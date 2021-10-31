@@ -1,6 +1,6 @@
 import { Button, ButtonsWrapper } from "../../styles/main";
-import { QueryCache, QueryClient, useQuery, useQueryClient } from "react-query";
 import { RestTrade, Trade } from "../../types/ftx";
+import { useQuery, useQueryClient } from "react-query";
 
 import { NextPage } from "next";
 import axios from "axios";
@@ -30,6 +30,13 @@ export const useTickerData = () => {
         },
       ];
 
+      axios.post(`/api/lowdb`, {
+        ...res.data.result,
+        time: new Date().toLocaleString("en-GB", {
+          timeStyle: "medium",
+        }),
+      });
+
       const ArrLength = currentStateRaw.length - 30;
 
       const currentState = currentStateRaw.slice(
@@ -40,7 +47,7 @@ export const useTickerData = () => {
       return currentState;
     },
     {
-      refetchInterval: 60000,
+      refetchInterval: 5000,
     }
   );
 };
