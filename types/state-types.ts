@@ -1,5 +1,5 @@
-import { TradeData } from "./ftx";
+import { Ask, Bid } from "./ftx";
 
 export interface TickerData {
-  [key: string]: { priceData: TradeData[] };
+  [key: string]: { bids: Bid[]; asks: Ask[] };
 }

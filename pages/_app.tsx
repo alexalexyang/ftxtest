@@ -7,9 +7,13 @@ import {
   useMemo,
   useState,
 } from "react";
+import { QueryClient, QueryClientProvider } from "react-query";
 
 import type { AppProps } from "next/app";
 import { TickerData } from "../types/state-types";
+import dynamic from "next/dynamic";
+
+const queryClient = new QueryClient();
 
 export const PriceContext = createContext({
   tickerData: {},
@@ -19,7 +23,7 @@ export const PriceContext = createContext({
   setTickerData: Dispatch<SetStateAction<TickerData>>;
 });
 
-function MyApp({ Component, pageProps }: AppProps) {
+function App({ Component, pageProps }: AppProps) {
   const [tickerData, setTickerData] = useState<TickerData>({});
 
   const value = useMemo(() => ({ tickerData, setTickerData }), [tickerData]);
@@ -27,9 +31,15 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <PriceContext.Provider value={value}>
-        <Component {...pageProps} />
+        <QueryClientProvider client={queryClient}>
+          <Component {...pageProps} />
+        </QueryClientProvider>
       </PriceContext.Provider>
     </>
   );
 }
-export default MyApp;
+export default process.env.NODE_ENV === "development"
+  ? dynamic(() => Promise.resolve(App), {
+      ssr: false,
+    })
+  : App;

@@ -14,7 +14,7 @@ interface Props {
   tickers: string[];
 }
 
-const ChartButtons: NextPage<Props> = ({ tickers }) => {
+const WsButtons: NextPage<Props> = ({ tickers }) => {
   const [ws, setWs] = useState<WebSocket>();
 
   const [pingId, setPingId] = useState<NodeJS.Timer>();
@@ -23,24 +23,23 @@ const ChartButtons: NextPage<Props> = ({ tickers }) => {
   const { setTickerData } = useContext(PriceContext);
 
   useEffect(() => {
-    if (!ws) {
-      return;
+    if (ws) {
+      ftxWs({ ws, setTickerData });
+      setPing(true);
     }
-
-    ftxWs({ ws, setTickerData });
-    setPing(true);
-  }, [ws]);
+  }, [ws, setTickerData]);
 
   useEffect(() => {
-    if (ping && ws) {
+    if (ping && ws && !pingId) {
       const id = ftxWsKeepAlive(ws);
       return setPingId(id);
     }
 
     if (!ping && pingId) {
       clearInterval(pingId);
+      setPingId(undefined);
     }
-  }, [ping]);
+  }, [ping, pingId, ws]);
 
   return (
     <ButtonsWrapper>
@@ -79,4 +78,4 @@ const ChartButtons: NextPage<Props> = ({ tickers }) => {
   );
 };
 
-export default ChartButtons;
+export default WsButtons;
