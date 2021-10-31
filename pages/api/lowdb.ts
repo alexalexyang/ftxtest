@@ -12,7 +12,6 @@ export default async function handler(
 ) {
   await db.read();
   db.data ||= { trades: [] };
-  console.log(file);
 
   try {
     db.data.trades.push(req.body);
