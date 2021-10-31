@@ -1,12 +1,22 @@
+import { QueryCache, QueryClient, useQuery, useQueryClient } from "react-query";
+import RestButtons, {
+  useTickerData,
+} from "../../components/rest-charts/rest-buttons";
+
 import Chart from "../../components/chart";
 import { Main } from "../../styles/main";
 import type { NextPage } from "next";
 import PageHead from "../../components/page-head";
 import { PriceContext } from "../../pages/_app";
-import RestButtons from "../../components/rest-charts/rest-buttons";
 import WsButtons from "../../components/ws-charts/ws-buttons";
 import styled from "styled-components";
 import { useContext } from "react";
+
+const TickerSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+`;
 
 const PanelsBox = styled.div`
   display: flex;
@@ -49,11 +59,26 @@ const RowItem = styled.span`
   width: 7rem;
 `;
 
+const ButtonWrappers = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+`;
+
 // const tickers = ["SOL/USD", "BTC/USD"];
 const tickers = ["SOL/USD"];
 
 const Lengzai: NextPage = () => {
   const { tickerData } = useContext(PriceContext);
+
+  const { status, data, error, isFetching } = useTickerData();
 
   return (
     <>
@@ -62,14 +87,20 @@ const Lengzai: NextPage = () => {
         <h1></h1>
 
         <h2>5s Resolution</h2>
-        {/* <RestButtons tickers={tickers} /> */}
-        <WsButtons tickers={tickers} />
+        <ButtonWrappers>
+          <ButtonRow>
+            REST: <RestButtons tickers={tickers} />
+          </ButtonRow>
+          <ButtonRow>
+            WS: <WsButtons tickers={tickers} />
+          </ButtonRow>
+        </ButtonWrappers>
 
-        {tickers.map((ticker) => (
-          <>
+        {tickers.map((ticker, idx) => (
+          <TickerSection key={idx}>
             <Chart
               ticker={ticker}
-              data={tickerData[ticker]?.bids}
+              data={data ? data : []}
               key={ticker}
               property="bid"
             />
@@ -99,7 +130,7 @@ const Lengzai: NextPage = () => {
                 </BidAskPanel>
               </PanelWrapper>
             </PanelsBox>
-          </>
+          </TickerSection>
         ))}
       </Main>
     </>
