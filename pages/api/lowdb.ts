@@ -1,8 +1,7 @@
 import { JSONFile, Low } from "lowdb";
 import { NextApiRequest, NextApiResponse } from "next";
 
-const file =
-  "/Users/alex.yang@futurice.com/Documents/GitHub/bauhinia/pages/api/db.json";
+const file = "/Users/alex.yang@futurice.com/Desktop/db.json";
 const adapter = new JSONFile(file);
 const db = new Low<any>(adapter);
 

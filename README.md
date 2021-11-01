@@ -1,6 +1,5 @@
 # Todo
 
-- Use JSON as DB: https://github.com/typicode/lowdb
 - Plot standard deviation and/or other useful indicators
 
 ## Buffet or bust
