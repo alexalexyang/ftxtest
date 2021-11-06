@@ -45,6 +45,12 @@ export interface Trade {
   volumeUsd24h: number;
 }
 
+export interface PricesWLinReg extends Trade {
+  linRegY: number;
+  stanDevUpperBound: number;
+  stanDevLowerBound: number;
+}
+
 export interface RestTrade {
   data: {
     result: Trade;

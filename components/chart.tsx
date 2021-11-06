@@ -8,12 +8,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import {
-  linearRegression,
-  linearRegressionLine,
-  mean,
-  standardDeviation,
-} from "simple-statistics";
 import { maxBy, minBy, round } from "lodash";
 
 import { ChartWrapper } from "../styles/main";
@@ -22,6 +16,8 @@ interface Props<T> {
   ticker: string;
   data: T[];
   dataKey: string;
+  mean: number;
+  spread: number;
   property: keyof T;
 }
 
@@ -29,6 +25,8 @@ const Chart = <T extends unknown>({
   ticker,
   data,
   dataKey,
+  mean,
+  spread,
   property,
 }: Props<T>) => {
   const min = minBy(data, property);
@@ -41,29 +39,12 @@ const Chart = <T extends unknown>({
   const minProp: number = min[property] as unknown as number;
   const maxProp: number = max[property] as unknown as number;
 
-  const linRegData = data.map((datum, idx) => [idx, datum.price]);
-  const linRegSlopeAndIntercept = linearRegression(linRegData);
-
-  const pricesOnly = data.map((datum) => datum.price);
-  const stanDev = standardDeviation(pricesOnly);
-
-  const newData = data.map((datum, idx) => {
-    datum.linRegY = linearRegressionLine(linRegSlopeAndIntercept)(idx);
-    datum.stanDevUpperBound = datum.linRegY + stanDev * 1;
-    datum.stanDevLowerBound = datum.linRegY - stanDev * 1;
-    return datum;
-  });
-
-  const meanOfData = mean(pricesOnly);
-  const spread = stanDev * 2;
-
   return (
     <ChartWrapper>
       <h2>{ticker}</h2>
       <ResponsiveContainer width={"100%"} height={250}>
         <LineChart
-          // data={data}
-          data={newData}
+          data={data}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
@@ -96,7 +77,7 @@ const Chart = <T extends unknown>({
         </LineChart>
       </ResponsiveContainer>
 
-      <span>Mean: {round(meanOfData, 3)}</span>
+      <span>Mean: {round(mean, 3)}</span>
       <span>Spread: {round(spread, 3)}</span>
     </ChartWrapper>
   );
