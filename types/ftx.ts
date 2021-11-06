@@ -51,6 +51,10 @@ export interface PricesWLinReg extends Trade {
   stanDevLowerBound: number;
 }
 
+// export interface PricesWBuySell extends PricesWLinReg {
+//   buy
+// }
+
 export interface RestTrade {
   data: {
     result: Trade;
