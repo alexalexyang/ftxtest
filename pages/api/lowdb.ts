@@ -16,7 +16,7 @@ export default async function handler(
     db.data.trades.push(req.body);
     await db.write();
 
-    res.status(200);
+    res.status(200).json({ status: "success" });
   } catch (err) {
     res.status(500).json(err);
   }

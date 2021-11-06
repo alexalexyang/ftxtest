@@ -1,14 +1,14 @@
-import { Button, ButtonsWrapper } from "../../styles/main";
+import { Button, ButtonsWrapper } from "../styles/main";
 import {
   ftxWs,
   ftxWsKeepAlive,
   subscribeChannels,
   unSubscribeChannels,
-} from "../../helpers/ftx-ws";
+} from "../helpers/ftx-ws";
 import { useContext, useEffect, useState } from "react";
 
 import { NextPage } from "next";
-import { PriceContext } from "../../pages/_app";
+import { PriceContext } from "../pages/_app";
 
 interface Props {
   tickers: string[];

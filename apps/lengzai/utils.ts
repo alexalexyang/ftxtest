@@ -1,10 +1,7 @@
-import { Button, ButtonsWrapper } from "../../styles/main";
 import { RestTrade, Trade } from "../../types/ftx";
 import { useQuery, useQueryClient } from "react-query";
 
-import { NextPage } from "next";
 import axios from "axios";
-import { useState } from "react";
 
 interface TradeProps extends Trade {
   time: string;
@@ -51,37 +48,3 @@ export const useTickerData = () => {
     }
   );
 };
-
-interface Props {
-  tickers: string[];
-}
-
-let counter = 0;
-
-const RestButtons: NextPage<Props> = ({ tickers }) => {
-  const [interval, setInterval] = useState<number | false>();
-
-  const { status, data, error, isFetching } = useTickerData();
-
-  return (
-    <ButtonsWrapper>
-      <Button
-        onClick={() => {
-          setInterval(2000);
-        }}
-      >
-        Connect
-      </Button>
-      {/* <Button onClick={() => {}}>Subscribe</Button> */}
-      <Button
-        onClick={() => {
-          setInterval(false);
-        }}
-      >
-        Disconnect
-      </Button>
-    </ButtonsWrapper>
-  );
-};
-
-export default RestButtons;

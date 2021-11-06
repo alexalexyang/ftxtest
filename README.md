@@ -1,6 +1,7 @@
 # Todo
 
-- Plot standard deviation and/or other useful indicators
+- Set buy/sell price as objects: `{buy: $x, sell: $y}`
+- Buy/sell when bids meet allowed price.
 
 ## Buffet or bust
 
@@ -15,6 +16,10 @@
 - Paper trading pending actual trades
 - Websockets for bids and offers
 - REST for second by second data?
+
+## References
+
+FTX fees: https://help.ftx.com/hc/en-us/articles/360024479432-Fees
 
 ## History
 
