@@ -1,7 +1,9 @@
 # Todo
 
-- Set buy/sell price as objects: `{buy: $x, sell: $y}`
-- Buy/sell when bids meet allowed price.
+- Trailing stop
+- Find cheapest coins
+  - with good spread and volatility
+  - can accommodate ftx fees
 
 ## Buffet or bust
 

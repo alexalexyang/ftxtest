@@ -62,8 +62,18 @@ const Lengzai: NextPage = () => {
       return;
     }
 
-    const dataWLinReg = addLinReg(data);
-    setDataWLinRegLongerTerm(dataWLinReg);
+    const dataLongerTerm = addLinReg(data);
+    setDataWLinRegLongerTerm(dataLongerTerm);
+
+    const arrLength = data.length - 30;
+
+    const dataShorterTermRaw = data
+      ? data.slice(arrLength <= 0 ? 0 : arrLength, data.length)
+      : [];
+
+    const dataShorterTerm = addLinReg(dataShorterTermRaw);
+
+    setDataWLinRegShorterTerm(dataShorterTerm);
   }, [data]);
 
   // BUY
@@ -168,16 +178,10 @@ const Lengzai: NextPage = () => {
             <h2>2 min</h2>
             <Chart
               ticker={ticker}
-              data={
-                dataWLinRegLongerTerm?.data ? dataWLinRegLongerTerm.data : []
-              }
+              data={dataWLinRegLongerTerm?.data || []}
               dataKey="price"
-              mean={
-                dataWLinRegLongerTerm?.mean ? dataWLinRegLongerTerm.mean : 0
-              }
-              spread={
-                dataWLinRegLongerTerm?.spread ? dataWLinRegLongerTerm.spread : 0
-              }
+              mean={dataWLinRegLongerTerm?.mean || 0}
+              spread={dataWLinRegLongerTerm?.spread || 0}
               key={`${ticker}-long-term`}
               property="bid"
             />
@@ -185,23 +189,10 @@ const Lengzai: NextPage = () => {
             <h2>Last 1 min</h2>
             <Chart
               ticker={ticker}
-              data={
-                dataWLinRegLongerTerm?.data
-                  ? dataWLinRegLongerTerm.data.slice(
-                      dataWLinRegLongerTerm.data.length - 30 <= 0
-                        ? 0
-                        : dataWLinRegLongerTerm.data.length - 30,
-                      dataWLinRegLongerTerm.data.length
-                    )
-                  : []
-              }
+              data={dataWLinRegShorterTerm?.data || []}
               dataKey="price"
-              mean={
-                dataWLinRegLongerTerm?.mean ? dataWLinRegLongerTerm.mean : 0
-              }
-              spread={
-                dataWLinRegLongerTerm?.spread ? dataWLinRegLongerTerm.spread : 0
-              }
+              mean={dataWLinRegShorterTerm?.mean || 0}
+              spread={dataWLinRegShorterTerm?.spread || 0}
               key={`${ticker}-short-term`}
               property="bid"
             />
