@@ -1,4 +1,4 @@
-import { Ask, Bid, WsBidAsk } from "../types/ftx";
+import { Ask, Bid, WsBidAsk } from "../types/ftx-types";
 import { Dispatch, SetStateAction } from "react";
 
 import { TickerData } from "../types/state-types";

@@ -1,11 +1,13 @@
-import { RestTrade, Trade } from "../../types/ftx";
+import { PricesWLinReg, RestTrade, TradeWTime } from "../../types/ftx-types";
+import {
+  linearRegression,
+  linearRegressionLine,
+  mean,
+  standardDeviation,
+} from "simple-statistics";
 import { useQuery, useQueryClient } from "react-query";
 
 import axios from "axios";
-
-interface TradeProps extends Trade {
-  time: string;
-}
 
 export const useTickerData = () => {
   const queryClient = useQueryClient();
@@ -14,7 +16,7 @@ export const useTickerData = () => {
     async () => {
       const res: RestTrade = await axios(`/api/ftx-market`);
 
-      const oldState: TradeProps[] =
+      const oldState: TradeWTime[] =
         queryClient.getQueryData(["ticker", "SOL/USD"]) || [];
 
       const currentStateRaw = [
@@ -34,7 +36,7 @@ export const useTickerData = () => {
         }),
       });
 
-      const ArrLength = currentStateRaw.length - 30;
+      const ArrLength = currentStateRaw.length - 60;
 
       const currentState = currentStateRaw.slice(
         ArrLength <= 0 ? 0 : ArrLength,
@@ -44,7 +46,42 @@ export const useTickerData = () => {
       return currentState;
     },
     {
-      refetchInterval: 5000,
+      refetchInterval: 2000,
     }
   );
+};
+
+export const addLinReg = (
+  data: TradeWTime[]
+): {
+  data: PricesWLinReg[];
+  mean: number;
+  spread: number;
+  slope: number;
+} => {
+  const linRegData = data.map((datum, idx) => [idx, datum.price]);
+  const linRegSlopeAndIntercept = linearRegression(linRegData);
+
+  const pricesOnly = data.map((datum) => datum.price);
+  const stanDev = standardDeviation(pricesOnly);
+
+  const pricesWLinReg: PricesWLinReg[] = data.map((datum, idx) => {
+    const linRegY = linearRegressionLine(linRegSlopeAndIntercept)(idx);
+
+    const newDatum: PricesWLinReg = {
+      ...datum,
+      linRegY,
+      stanDevUpperBound: linRegY + stanDev * 1,
+      stanDevLowerBound: linRegY - stanDev * 1,
+    };
+
+    return newDatum;
+  });
+
+  return {
+    data: pricesWLinReg,
+    mean: mean(pricesOnly),
+    spread: stanDev * 2,
+    slope: linRegSlopeAndIntercept.m,
+  };
 };
