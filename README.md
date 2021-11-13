@@ -2,8 +2,13 @@
 
 - Trailing stop
 - Find cheapest coins
+
   - with good spread and volatility
   - can accommodate ftx fees
+
+- Try differencing + Bayes
+- Try ARIMA
+- Time series analysis
 
 ## Buffet or bust
 
