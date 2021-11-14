@@ -7,6 +7,7 @@ import {
 } from "simple-statistics";
 import { useQuery, useQueryClient } from "react-query";
 
+import { DataWLinReg } from ".";
 import axios from "axios";
 
 export const useTickerData = () => {
@@ -51,14 +52,7 @@ export const useTickerData = () => {
   );
 };
 
-export const addLinReg = (
-  data: TradeWTime[]
-): {
-  data: PricesWLinReg[];
-  mean: number;
-  spread: number;
-  slope: number;
-} => {
+export const addLinReg = (data: TradeWTime[]): DataWLinReg => {
   const linRegData = data.map((datum, idx) => [idx, datum.price]);
   const linRegSlopeAndIntercept = linearRegression(linRegData);
 
@@ -83,5 +77,6 @@ export const addLinReg = (
     mean: mean(pricesOnly),
     spread: stanDev * 2,
     slope: linRegSlopeAndIntercept.m,
+    stanDev,
   };
 };

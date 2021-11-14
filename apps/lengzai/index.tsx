@@ -1,3 +1,4 @@
+import { Ask, Bid, PricesWLinReg } from "../../types/ftx-types";
 import {
   BidAskPanel,
   ButtonRow,
@@ -10,6 +11,8 @@ import {
   TickerSection,
 } from "./styles";
 import { addLinReg, useTickerData } from "./utils";
+// import db from "/Users/alex.yang@futurice.com/Desktop/db.json";
+import { floor, round } from "lodash";
 import { useContext, useEffect, useState } from "react";
 
 import Chart from "../../components/chart";
@@ -17,16 +20,14 @@ import { Main } from "../../styles/main";
 import type { NextPage } from "next";
 import PageHead from "../../components/page-head";
 import { PriceContext } from "../../pages/_app";
-import { PricesWLinReg } from "../../types/ftx-types";
 import WsButtons from "../../components/ws-buttons";
-// import db from "/Users/alex.yang@futurice.com/Desktop/db.json";
-import { floor } from "lodash";
 
-interface DataWLinReg {
+export interface DataWLinReg {
   data: PricesWLinReg[];
   mean: number;
   spread: number;
   slope: number;
+  stanDev: number;
 }
 
 interface Purchase {
@@ -54,6 +55,18 @@ const Lengzai: NextPage = () => {
   const [myBudget, setMyBudget] = useState<number>(initBudget);
   const [purchase, setPurchase] = useState<Purchase>();
   const [profit, setProfit] = useState<number>(0);
+
+  // Trailing strategy
+  const [lowestAsk, setLowestAsk] = useState<Ask>();
+  const [highestBid, setHighestBid] = useState<Bid>();
+  const [buySell, setBuySell] = useState<{
+    status: "buy" | "sell";
+    buy?: Ask;
+    sell?: Bid;
+  }>({
+    status: "buy",
+  });
+  const [trailingProfit, setTrailingProfit] = useState<number>(0);
 
   // Transform raw data
 
@@ -129,12 +142,6 @@ const Lengzai: NextPage = () => {
     if (!latestBid || !dataWLinRegLongerTerm || !purchase?.ask) {
       return;
     }
-    // const latestDatum =
-    //   dataWLinRegLongerTerm.data[dataWLinRegLongerTerm.data.length - 1];
-    // const latestLinRegY = latestDatum.linRegY;
-    // const latestUpperBound = latestDatum.stanDevUpperBound;
-    // const UpperSpread = latestUpperBound - latestLinRegY;
-    // const sellPoint = latestUpperBound - UpperSpread / 2 + fee;
 
     if (!purchase?.buy) {
       return;
@@ -155,6 +162,74 @@ const Lengzai: NextPage = () => {
     }
   }, [latestBid, dataWLinRegLongerTerm, myBudget, purchase]);
 
+  // Trailing strategy
+  useEffect(() => {
+    const ticker = tickerData["SOL/USD"];
+
+    if (buySell.status === "buy") {
+      if (!ticker || !ticker.asks) {
+        return;
+      }
+
+      const latestAsk = ticker.asks[ticker.asks.length - 1];
+
+      if (!lowestAsk || latestAsk.ask < lowestAsk.ask) {
+        setLowestAsk(latestAsk);
+      }
+    }
+
+    if (buySell.status === "sell") {
+      if (!ticker || !ticker.bids) {
+        return;
+      }
+
+      const latestBid = ticker.bids[ticker.bids.length - 1];
+
+      if (!highestBid || latestBid.bid > highestBid.bid) {
+        setHighestBid(latestBid);
+      }
+    }
+  }, [tickerData, lowestAsk, highestBid, buySell]);
+
+  useEffect(() => {
+    if (!lowestAsk || !dataWLinRegLongerTerm || !buySell) {
+      return;
+    }
+
+    const latestPrice =
+      dataWLinRegLongerTerm.data[dataWLinRegLongerTerm.data.length - 1];
+
+    if (buySell.status === "buy") {
+      const diff = latestPrice.price - lowestAsk.ask;
+      if (diff > 0 && diff > dataWLinRegLongerTerm.stanDev / 10) {
+        setBuySell({ status: "sell", buy: lowestAsk });
+        setLowestAsk(undefined);
+      }
+    }
+  }, [lowestAsk, dataWLinRegLongerTerm, buySell, trailingProfit]);
+
+  useEffect(() => {
+    if (!highestBid || !dataWLinRegLongerTerm || !buySell) {
+      return;
+    }
+
+    const latestPrice =
+      dataWLinRegLongerTerm.data[dataWLinRegLongerTerm.data.length - 1];
+
+    if (buySell.status === "sell" && buySell.buy) {
+      const diff = highestBid.bid - latestPrice.price;
+      if (diff > 0 && diff > dataWLinRegLongerTerm.stanDev / 10) {
+        setTrailingProfit(trailingProfit + highestBid.bid - buySell.buy.ask);
+
+        setBuySell({ ...buySell, status: "buy", sell: highestBid });
+        setHighestBid(undefined);
+      }
+    }
+  }, [highestBid, dataWLinRegLongerTerm, buySell, trailingProfit]);
+
+  const latestTrade =
+    dataWLinRegShorterTerm?.data[dataWLinRegShorterTerm.data.length - 1];
+
   return (
     <>
       <PageHead />
@@ -172,6 +247,28 @@ const Lengzai: NextPage = () => {
         </span>
         <span>Budget: {myBudget}</span>
         <span>Profit: {profit}</span>
+
+        <span>Latest price: {latestTrade?.price}</span>
+        <span>Lowest ask: {lowestAsk && lowestAsk.ask}</span>
+        <span>Lowest ask size: {lowestAsk && lowestAsk.askSize}</span>
+        <span>Highest bid: {highestBid && highestBid.bid}</span>
+        <span>Highest bid size: {highestBid && highestBid.bidSize}</span>
+        {latestTrade?.price && lowestAsk?.ask && dataWLinRegShorterTerm && (
+          <>
+            <span>
+              Price-Ask diff: {round(latestTrade.price - lowestAsk.ask, 5)}
+            </span>
+            <span>
+              Partial Std: {round(dataWLinRegShorterTerm.stanDev / 10, 5)}
+            </span>
+          </>
+        )}
+
+        <span>Trailing profit: {trailingProfit}</span>
+        <span>
+          Status: {buySell.status}, Buy: {buySell.buy?.ask}, Sell:{" "}
+          {buySell.sell?.bid}
+        </span>
 
         {tickers.map((ticker, idx) => (
           <TickerSection key={idx}>
