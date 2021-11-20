@@ -30,17 +30,10 @@ export interface DataWLinReg {
   stanDev: number;
 }
 
-interface Purchase {
-  size: number;
-  ask: number;
-  buy?: number;
-  sell?: number;
-}
-
 // const tickers = ["SOL/USD", "BTC/USD"];
 const tickers = ["SOL/USD"];
 const initBudget = 35;
-const fee = 0.07;
+const feePercent = 0.07;
 
 const Lengzai: NextPage = () => {
   const { tickerData } = useContext(PriceContext);
@@ -51,10 +44,6 @@ const Lengzai: NextPage = () => {
 
   const [dataWLinRegShorterTerm, setDataWLinRegShorterTerm] =
     useState<DataWLinReg>();
-
-  const [myBudget, setMyBudget] = useState<number>(initBudget);
-  const [purchase, setPurchase] = useState<Purchase>();
-  const [profit, setProfit] = useState<number>(0);
 
   // Trailing strategy
   const [lowestAsk, setLowestAsk] = useState<Ask>();
@@ -76,6 +65,7 @@ const Lengzai: NextPage = () => {
     }
 
     const dataLongerTerm = addLinReg(data);
+
     setDataWLinRegLongerTerm(dataLongerTerm);
 
     const arrLength = data.length - 30;
@@ -87,82 +77,10 @@ const Lengzai: NextPage = () => {
     const dataShorterTerm = addLinReg(dataShorterTermRaw);
 
     setDataWLinRegShorterTerm(dataShorterTerm);
-  }, [data]);
+  }, [data, buySell]);
 
-  // BUY
+  // Trail prices
 
-  const latestAsk =
-    tickerData["SOL/USD"]?.asks[tickerData["SOL/USD"]?.asks?.length - 1];
-
-  useEffect(() => {
-    if (
-      !latestAsk ||
-      !dataWLinRegLongerTerm ||
-      dataWLinRegLongerTerm.slope < 0
-    ) {
-      return;
-    }
-
-    const latestDatum =
-      dataWLinRegLongerTerm.data[dataWLinRegLongerTerm.data.length - 1];
-    const latestLinRegY = latestDatum.linRegY;
-    const latestLowerBound = latestDatum.stanDevLowerBound;
-    const lowerSpread = latestLinRegY - latestLowerBound;
-
-    const buyPoint = latestLowerBound + lowerSpread / 2;
-
-    if (latestAsk.ask < buyPoint) {
-      const affordableSize = floor(myBudget / latestAsk.ask, 2);
-
-      const buy = latestAsk.ask * affordableSize;
-
-      if (!purchase) {
-        const newPurchase = {
-          size: affordableSize,
-          ask: latestAsk.ask,
-          buy,
-          sell: undefined,
-        };
-
-        setPurchase(newPurchase);
-        setMyBudget(myBudget - buy);
-
-        console.log("BUY!");
-        console.log(newPurchase);
-      }
-    }
-  }, [latestAsk, dataWLinRegLongerTerm, myBudget, purchase]);
-
-  // SELL
-
-  const latestBid =
-    tickerData["SOL/USD"]?.bids[tickerData["SOL/USD"]?.bids?.length - 1];
-
-  useEffect(() => {
-    if (!latestBid || !dataWLinRegLongerTerm || !purchase?.ask) {
-      return;
-    }
-
-    if (!purchase?.buy) {
-      return;
-    }
-
-    const revenue = latestBid.bid * purchase.size; // Assume we sell everything in one bid.
-    const profit = revenue - purchase.buy - fee; // Assume min. profit is break-even.
-    setProfit(profit);
-
-    if (profit > 0) {
-      const newBudget = myBudget + revenue + profit;
-      setMyBudget(newBudget);
-      console.log("PROFIT! ", newBudget);
-
-      if (purchase) {
-        setPurchase(undefined);
-      }
-    }
-  }, [latestBid, dataWLinRegLongerTerm, myBudget, purchase]);
-
-  // Trailing strategy
   useEffect(() => {
     const ticker = tickerData["SOL/USD"];
 
@@ -191,6 +109,9 @@ const Lengzai: NextPage = () => {
     }
   }, [tickerData, lowestAsk, highestBid, buySell]);
 
+  // Buy-sell action
+
+  // BUY
   useEffect(() => {
     if (!lowestAsk || !dataWLinRegLongerTerm || !buySell) {
       return;
@@ -202,12 +123,15 @@ const Lengzai: NextPage = () => {
     if (buySell.status === "buy") {
       const diff = latestPrice.price - lowestAsk.ask;
       if (diff > 0 && diff > dataWLinRegLongerTerm.stanDev / 10) {
+        // restructure data to ad to data for chart
         setBuySell({ status: "sell", buy: lowestAsk });
+
         setLowestAsk(undefined);
       }
     }
   }, [lowestAsk, dataWLinRegLongerTerm, buySell, trailingProfit]);
 
+  // SELL
   useEffect(() => {
     if (!highestBid || !dataWLinRegLongerTerm || !buySell) {
       return;
@@ -219,8 +143,12 @@ const Lengzai: NextPage = () => {
     if (buySell.status === "sell" && buySell.buy) {
       const diff = highestBid.bid - latestPrice.price;
       if (diff > 0 && diff > dataWLinRegLongerTerm.stanDev / 10) {
-        setTrailingProfit(trailingProfit + highestBid.bid - buySell.buy.ask);
-
+        const fee = (highestBid.bid / 100) * feePercent;
+        console.log(highestBid.bid - buySell.buy.ask, fee);
+        setTrailingProfit(
+          trailingProfit + highestBid.bid - buySell.buy.ask - fee
+        );
+        // restructure data to ad to data for chart
         setBuySell({ ...buySell, status: "buy", sell: highestBid });
         setHighestBid(undefined);
       }
@@ -242,27 +170,22 @@ const Lengzai: NextPage = () => {
           </ButtonRow>
         </ButtonWrappers>
 
-        <span>
-          Ask: {purchase?.ask}, Buy: {purchase?.buy}
-        </span>
-        <span>Budget: {myBudget}</span>
-        <span>Profit: {profit}</span>
-
         <span>Latest price: {latestTrade?.price}</span>
         <span>Lowest ask: {lowestAsk && lowestAsk.ask}</span>
         <span>Lowest ask size: {lowestAsk && lowestAsk.askSize}</span>
         <span>Highest bid: {highestBid && highestBid.bid}</span>
         <span>Highest bid size: {highestBid && highestBid.bidSize}</span>
-        {latestTrade?.price && lowestAsk?.ask && dataWLinRegShorterTerm && (
-          <>
-            <span>
-              Price-Ask diff: {round(latestTrade.price - lowestAsk.ask, 5)}
-            </span>
-            <span>
-              Partial Std: {round(dataWLinRegShorterTerm.stanDev / 10, 5)}
-            </span>
-          </>
-        )}
+        <span>
+          Price-Ask diff:{" "}
+          {latestTrade &&
+            lowestAsk &&
+            round(latestTrade.price - lowestAsk.ask, 5)}
+        </span>
+        <span>
+          Partial Std:{" "}
+          {dataWLinRegShorterTerm &&
+            round(dataWLinRegShorterTerm.stanDev / 10, 5)}
+        </span>
 
         <span>Trailing profit: {trailingProfit}</span>
         <span>

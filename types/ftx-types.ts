@@ -22,6 +22,7 @@ export interface Ask {
 }
 
 export interface Trade {
+  id: string;
   name: string;
   baseCurrency: string;
   quoteCurrency: string;
@@ -49,6 +50,7 @@ export interface PricesWLinReg extends Trade {
   linRegY: number;
   stanDevUpperBound: number;
   stanDevLowerBound: number;
+  purchase?: { size?: number; ask?: number; bid?: number };
 }
 
 export interface TradeWTime extends Trade {

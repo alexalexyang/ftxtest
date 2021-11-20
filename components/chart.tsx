@@ -4,6 +4,8 @@ import {
   Line,
   LineChart,
   ResponsiveContainer,
+  Scatter,
+  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
@@ -72,6 +74,13 @@ const Chart = <T extends unknown>({
             dataKey={"stanDevLowerBound"}
             stroke="#97d74e"
             dot={false}
+            tooltipType="none"
+          />
+          <Line
+            type="monotone"
+            dataKey={"purchase.ask"}
+            // stroke="#243061"
+            dot={{ stroke: "red", strokeWidth: 2 }}
             tooltipType="none"
           />
         </LineChart>

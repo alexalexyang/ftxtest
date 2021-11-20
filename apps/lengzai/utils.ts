@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from "react-query";
 
 import { DataWLinReg } from ".";
 import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
 
 export const useTickerData = () => {
   const queryClient = useQueryClient();
@@ -20,21 +21,22 @@ export const useTickerData = () => {
       const oldState: TradeWTime[] =
         queryClient.getQueryData(["ticker", "SOL/USD"]) || [];
 
+      const dateNow = new Date().toLocaleString("en-GB", {
+        timeStyle: "medium",
+      });
+
       const currentStateRaw = [
         ...(oldState ? oldState : []),
         {
           ...res.data.result,
-          time: new Date().toLocaleString("en-GB", {
-            timeStyle: "medium",
-          }),
+          id: uuidv4(),
+          time: dateNow,
         },
       ];
 
       axios.post(`/api/lowdb`, {
         ...res.data.result,
-        time: new Date().toLocaleString("en-GB", {
-          timeStyle: "medium",
-        }),
+        time: dateNow,
       });
 
       const ArrLength = currentStateRaw.length - 60;
