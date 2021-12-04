@@ -1,6 +1,6 @@
 # Todo
 
-- Trailing stop
+- Account for size when bidding/asking
 - Find cheapest coins
 
   - with good spread and volatility
